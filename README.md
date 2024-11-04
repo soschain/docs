@@ -115,7 +115,5 @@ The **UHI serves as an index**, allowing patients or practitioners **to construc
 
 The IPS is a FHIR Bundle document containing a Composition, healthcare sections, and URLs for each FHIR resource within the document. This standard has been approved by the G7 and EU for cross-border healthcare data exchange.
 
-More information:
-
-https://github.com/soschain/docs/en/GATEWAY.md
+More information can be found [here](./en/GATEWAY.md)
 

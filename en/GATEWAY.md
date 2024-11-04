@@ -163,6 +163,4 @@ In summary, the HTTP Content-Type will be:
 
 ---
 
-Technical information about the Endpoints:
-
-https://github.com/soschain/docs/en/ENDPOINTS.md
+Technical information about the endpoints can be found [here](./ENDPOINTS.md).
