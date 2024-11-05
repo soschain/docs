@@ -163,4 +163,4 @@ In summary, the HTTP Content-Type will be:
 
 ---
 
-Technical information about the endpoints can be found [here](./ENDPOINTS.md).
+More information about the endpoints can be found [here](./ENDPOINTS.md).
