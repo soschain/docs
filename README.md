@@ -3,7 +3,7 @@
 
 Copyright (c) 2024 Fernando Latorre López, CTO at [ConnectHealth](https://connecthealth.info).
 
----
+## Introduction
 
 SOSCHAIN is a collaborative shared data space designed to enhance data accessibility and security through the use of a ***Unified Health ID for patients***, operating on the patented *Unified Identification Protocol for Training and Health* and based on the Unified Health Chain (UHC) and the Don@te projects. It ***enables the implementation of a Unified Health Index (UHI)***, which is especially crucial during emergencies and catastrophic events.
 
@@ -115,5 +115,5 @@ The **UHI serves as an index**, allowing patients or practitioners **to construc
 
 The IPS is a FHIR Bundle document containing a Composition, healthcare sections, and URLs for each FHIR resource within the document. This standard has been approved by the G7 and EU for cross-border healthcare data exchange.
 
-More information can be found [here](./en/GATEWAY.md)
+More information can be found [here](./gateway/README.md)
 

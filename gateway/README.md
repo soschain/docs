@@ -99,15 +99,15 @@ This protection is crucial for mitigating threats like Snake malware and similar
 
 To facilitate secure, standards-based communication and ensure financial-grade API security, the system will implement OAuth PAR (Pushed Authorization Requests), JAR (JWT Secured Authorization Request), and JARM (JWT Secured Authorization Response Mode) specifications. These protocols will protect data exchange in HTTP requests and responses when accessing confidential information and exchanging sensible information between the parties.
 
-##### PAR (Pushed Authorization Requests)
+##### [PAR (Pushed Authorization Requests)](https://datatracker.ietf.org/doc/html/rfc9126)
 
 It is a specification within the OAuth 2.0 framework that allows HTTP requests to be sent securely and directly to the desired server (recipient). This method is implemented in the document to secure API communications with healthcare services.
 
-##### JAR (JWT Secured Authorization Request)
+##### [JAR (JWT Secured Authorization Request)](https://datatracker.ietf.org/doc/html/rfc9101)
 
 It is a specification that allows HTTP requests to be signed and optionally encrypted using JWT. In this document, JAR ensures the secure exchange of confidential data.
 
-##### JARM (JWT Secured Authorization Response Mode)
+##### [JARM (JWT Secured Authorization Response Mode)](https://openid.net/specs/oauth-v2-jarm.html) 
 
 It is a specification that secures HTTP responses to be signed and optionally encrypted using JWT.
 
@@ -147,19 +147,48 @@ Malware implants can intercept the keys negotiated in the SSL protocol, compromi
 
 ---
 
-### C. Demystifying the 'Content-Type' HTTP Header, JOSE Header 'Content Type' (cty), and 'Type' of the Body Content in the Payload of Protected Messages (type)
+### C. Standard FHIR and Protected Requests
 
-The Content-Type HTTP header specifies the expected content type of the request body. For HL7 FHIR data, this is typically `fhir+json`. In the case of PAR and JAR requests that embed FHIR data, the Content-Type will be `x-www-form-urlencoded`, with the protected message sent in the `request` form parameter.
+Requests can be **synchronous** (immediate response) or **asynchronous** (deferred response). For operations like data certification and blockchain verification, asynchronous requests are recommended, as they allow for background processing. An asynchronous request omits the `Accept` header, signaling that the requester will later retrieve the response using the `jti` (unique identifier) of the original request as the `thid` (thread ID), which acts as a reference to locate the associated response.
 
-According to the DIDComm specification, the content type describing the embedded body in the JWT (`payload.body`) can also be included in the JWT payload using the "type" property (`payload.type`). This internal "type" property will specify `fhir+json` for HL7 FHIR resources.
+#### Understanding HTTP Headers (`Content-Type` and `Accept`), JOSE `cty` Header, and Payload `type` in Protected Messages
 
-Additionally, the protected headers in both the JWT and JWE will adhere to established standards. The JWE header will include the 'cty' claim (content type) specifying `jwt` to indicate that a nested JWT is enveloped, and the `typ` claim specifying `didcomm-encrypted+json` to indicate the format of the JWE. The embedded JWT will have a protected (signed) header containing the `typ` claim as `didcomm-signed+json`, while the payload will include the `type` claim with `fhir+json`, as noted earlier.
+For synchronous operations in **SOSCHAIN**, the HTTP `Accept` header specifies the desired response format, while the `Content-Type` header defines the format of the request payload. When working with HL7 FHIR resources, `Content-Type` includes `fhir+json` to signal FHIR-compatible JSON content.
 
-In summary, the HTTP Content-Type will be:
+For [Pushed Authorization Requests (PAR)](https://datatracker.ietf.org/doc/html/rfc9126) and [JWT Secured Authorization Requests (JAR)](https://datatracker.ietf.org/doc/html/rfc9101) that embed data like FHIR resources, the `Content-Type` is typically `application/x-www-form-urlencoded`, with the protected message carried in the `request` parameter. In **SOSCHAIN**, `Accept` can be omitted for asynchronous requests, while for synchronous requests, it may contain `fhir+json`, `application/x-www-form-urlencoded`, or `text/html`.
 
-- **`fhir+json`**: Indicates that standard HL7 FHIR data is expected in the HTTP body, which may include a specific FHIR resource, a Bundle of type 'batch', or an IPS Bundle of type 'document' containing a Composition resource.
+Per the [DIDComm Messaging 2.0](https://identity.foundation/didcomm-messaging/spec/) specification, the internal type of embedded payloads (`payload.body`) can be indicated in the JWT payload using the `payload.type` property (e.g., `"fhir+json"` for FHIR data). This `type` property in the payload specifies the content type of the data within the protected JWT `body` property.
 
-- **`x-www-form-urlencoded`**: Used for sending form parameters (similar to OAuth JAR) via protected JWTs in the `request` parameter or when sending the `jti` of a previously sent JWT using the `request_uri` parameter. This approach ensures data protection even in compromised networks, such as those affected by Snake malware implants sniffing HTTPS traffic.
+For secure handling, the `cty` (content type) claim in the JOSE (JSON Object Signing and Encryption) headers for both JWT and JWE specifies the type of content:
+- In a JWE header, the `cty` might specify `jwt` to indicate a nested JWT.
+- The `typ` claim specifies the overall format, such as `didcomm-encrypted+json` for an encrypted DIDComm message, suitable for both synchronous and asynchronous operations.
+
+The inner JWT within the DIDComm encrypted message would include:
+- A protected `typ` claim as `didcomm-signed+json`.
+- A payload `type` claim, e.g., `fhir+json`, if the content is an HL7 FHIR resource.
+
+This usage follows standards like [RFC 7515 (JWS)](https://datatracker.ietf.org/doc/html/rfc7515) and [RFC 7516 (JWE)](https://datatracker.ietf.org/doc/html/rfc7516).
+
+For synchronous responses using a form post, you can set `response_mode` to `form_post.jwt` and the `Accept` header to `text/html`.
+
+In summary, the HTTP `Content-Type` options are:
+
+- **`fhir+json`**: Signals that the payload is standard HL7 FHIR data, which may contain a specific FHIR resource, a batch Bundle, or an IPS Bundle with a Composition resource.
+- **`application/x-www-form-urlencoded`**: Used for form parameters, particularly when protecting requests through JWT/DIDComm messages. This is effective against network compromises, such as those from malware that might sniff HTTPS key negotiation and traffic (access tokens, data, etc.).
+
+---
+
+### D. Protected Response
+
+Typically, an HTTP `Accept` header with `fhir+json` in a FHIR API response indicates that the client expects JSON-formatted FHIR resources. However, the **SOSCHAIN Gateway Service** introduces additional protections for sensitive data to avoid malware implants spying on HTTPS connections.
+
+Implementing [JARM (JWT Secured Authorization Response Mode)](https://openid.net/specs/oauth-v2-jarm.html) enhances security by safeguarding authorization responses. JARM reduces risks from response tampering or interception by embedding responses in a JWT or DIDComm message, where each parameter is signed or encrypted, securing against `Man-in-the-Middle` attacks or malware manipulation.
+
+JARM also addresses Mix-Up attacks, which arise when a client interacts with multiple authorization servers (common in multi-provider environments). Without JARM, a malicious server could trick a client into accepting responses intended for another server. By signing the entire authorization response, JARM includes claims like `issuer` and a key ID for signature verification, helping the client verify the origin.
+
+In SOSCHAIN, a **protected JARM response** is a JWT (DIDComm message) containing the complete response data in its payload (e.g., in the `body` property). To receive this protected response:
+- The **protected request** should specify `response_mode` as `jwt` for both synchronous and asynchronous cases. For this mode, the `Accept` header should be `application/x-www-form-urlencoded`.
+- Alternatively, for synchronous form-post responses, set `response_mode` to `form_post.jwt` and `Accept` to `text/html`.
 
 ---
 
