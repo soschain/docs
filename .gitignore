@@ -1,0 +1,10 @@
+*.txt
+node_modules
+
+# Jest 
+coverage
+
+build
+logs
+
+.env
